@@ -1,8 +1,5 @@
-import { useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+import { useState, useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
 
 const countries = ['Mexico', 'Sweden', 'New Zealand', 'Thailand'];
 const categories = ['GDP', 'Inflation Rate', 'Unemployment Rate', 'Interest Rate', 'Population'];
@@ -12,87 +9,111 @@ export default function EconomicComparison() {
   const [country2, setCountry2] = useState('');
   const [category1, setCategory1] = useState('');
   const [category2, setCategory2] = useState('');
-  const [chartData, setChartData] = useState(null);
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
 
   const fetchData = async (country, category) => {
     try {
       const response = await fetch(`YOUR_API_ENDPOINT?country=${country}&indicator=${category}&apiKey=YOUR_API_KEY`);
       const data = await response.json();
-
-      // Example: Modify this based on the actual API response structure
-      return data.value || Math.random() * 100; // Fallback if API data is unavailable
+      return data.value || Math.random() * 100;
     } catch (error) {
       console.error('Error fetching data:', error);
-      return Math.random() * 100; // Fallback for errors
+      return Math.random() * 100;
     }
   };
 
-
-  const compareCountries = () => {  
+  const compareCountries = async () => {
     if (!country1 || !country2 || !category1 || !category2) {
       alert('Please select both countries and categories');
       return;
     }
 
-    const data1 = fetchData(country1, category1);
-    const data2 = fetchData(country2, category2);
+    const data1 = await fetchData(country1, category1);
+    const data2 = await fetchData(country2, category2);
 
-    setChartData({
-      labels: [country1, country2],
-      datasets: [{
-        label: 'Comparison',
-        data: [data1, data2],
-        backgroundColor: ['rgba(74, 144, 226, 0.6)', 'rgba(255, 99, 132, 0.6)'],
-        borderColor: ['rgba(74, 144, 226, 1)', 'rgba(255, 99, 132, 1)'],
-        borderWidth: 2
-      }]
-    });
-  };
-
-  const options = {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    },
-    plugins: {
-      title: {
-        display: true,
-        text: `${category1} Comparison`,
-        font: {
-          size: 16,
-          weight: 'bold'
-        }
-      },
-      legend: {
-        labels: {
-          font: {
-            size: 14
-          }
-        }
-      }
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
     }
+
+    const ctx = chartRef.current.getContext('2d');
+
+    chartInstance.current = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [country1, country2],
+        datasets: [
+          {
+            label: category1,
+            data: [data1, 0],
+            backgroundColor: 'rgba(74, 144, 226, 0.8)',
+            borderColor: 'rgba(74, 144, 226, 1)',
+            borderWidth: 1,
+            borderRadius: 10,
+            borderSkipped: false,
+          },
+          {
+            label: category2,
+            data: [0, data2],
+            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+            borderRadius: 10,
+            borderSkipped: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              font: {
+                family: 'Poppins'
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: `${category1} vs ${category2} Comparison`,
+            font: {
+              size: 18,
+              weight: 'bold'
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
   };
 
   return (
     <div className="bg-[#2a2227] min-h-screen p-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+        <h1 className="text-4xl font-bold text-center mb-8 text-slate-200">
           Economic Indicators Comparison
         </h1>
         
-        {/* Selection Section */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Country 1 Card */}
           <div className="bg-white shadow-lg p-6 rounded-md">
             <label className="block text-gray-700 mb-2 font-medium">Select Country 1</label>
             <select 
@@ -119,7 +140,6 @@ export default function EconomicComparison() {
             </select>
           </div>
 
-          {/* Country 2 Card */}
           <div className="bg-white shadow-lg p-6 rounded-md">
             <label className="block text-gray-700 mb-2 font-medium">Select Country 2</label>
             <select 
@@ -147,7 +167,6 @@ export default function EconomicComparison() {
           </div>
         </div>
 
-        {/* Compare Button */}
         <div className="text-center mb-6">
           <button 
             onClick={compareCountries}
@@ -157,15 +176,13 @@ export default function EconomicComparison() {
           </button>
         </div>
 
-        {/* Chart Section */}
         <div className="bg-white shadow-lg p-6 rounded-md">
-          {chartData ? (
-            <Bar data={chartData} options={options} />
-          ) : (
-            <p className="text-center text-gray-500">Select options and click "Compare Countries" to see the chart.</p>
-          )}
+          <div className="w-full h-[400px] relative">
+            <canvas ref={chartRef}></canvas>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
