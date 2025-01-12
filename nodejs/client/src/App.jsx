@@ -133,6 +133,8 @@ export default function EconomicComparison() {
               onChange={(e) => setCategory1(e.target.value)} 
               className="w-full border-gray-300 rounded-md p-2"
             >
+              {/* TODO
+              change the select a categoty to select a category related to */}
               <option value="">Select a category...</option>
               {categories.map((category) => (
                 <option key={category} value={category}>{category}</option>
@@ -166,6 +168,8 @@ export default function EconomicComparison() {
             </select>
           </div>
         </div>
+        {/* TODO: to create a scond page where after selecting the category will take you to another page which will help
+        select a list of category for chart */}
 
         <div className="text-center mb-6">
           <button 
