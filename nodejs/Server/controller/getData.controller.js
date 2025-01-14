@@ -60,8 +60,8 @@ const getData = async (req, res) => {
 
         res.json({
             message: `Data for ${country1} - ${category1}, and ${country2} - ${category2} fetched successfully`,
-            data1,
-            data2
+            data1: filterData1,
+            data2: filterData2
         });
 
     } catch (error) {
