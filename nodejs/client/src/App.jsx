@@ -4,6 +4,30 @@ import Chart from 'chart.js/auto';
 const countries = ['Mexico', 'Sweden', 'New Zealand', 'Thailand'];
 const categories = ['GDP', 'Inflation Rate', 'Unemployment Rate', 'Interest Rate', 'Population'];
 
+// Define primary indicators and their exact matching titles
+const PRIMARY_INDICATORS = {
+  'GDP': {
+    exactTitle: 'GDP',
+    excludeWords: ['from', 'per', 'growth', 'ratio']
+  },
+  'Inflation Rate': {
+    exactTitle: 'Inflation Rate',
+    excludeWords: ['core', 'food', 'transport', 'housing', 'monthly']
+  },
+  'Interest Rate': {
+    exactTitle: 'Interest Rate',
+    excludeWords: ['deposit', 'lending', 'mortgage', 'interbank', 'policy']
+  },
+  'Unemployment Rate': {
+    exactTitle: 'Unemployment Rate',
+    excludeWords: ['youth', 'long', 'short']
+  },
+  'Population': {
+    exactTitle: 'Population',
+    excludeWords: ['growth', 'density', 'urban', 'rural']
+  }
+};
+
 export default function EconomicComparison() {
   const [country1, setCountry1] = useState('');
   const [country2, setCountry2] = useState('');
@@ -12,14 +36,83 @@ export default function EconomicComparison() {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
+  const getPrimaryIndicatorData = (data, category) => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return null;
+    }
+
+    const indicatorConfig = PRIMARY_INDICATORS[category];
+    if (!indicatorConfig) {
+      return data[0]; // Fallback to first item if category not configured
+    }
+
+    // First try to find exact match
+    let primaryData = data.find(item => 
+      item.Category === category || 
+      item.Title === `${item.Country} ${indicatorConfig.exactTitle}`
+    );
+
+    // If no exact match, try to find the most relevant entry
+    if (!primaryData) {
+      primaryData = data.find(item => {
+        const hasExcludedWord = indicatorConfig.excludeWords.some(word => 
+          item.Category.toLowerCase().includes(word.toLowerCase()) ||
+          item.Title.toLowerCase().includes(word.toLowerCase())
+        );
+        
+        return !hasExcludedWord && (
+          item.Category.includes(category) ||
+          item.Title.includes(category)
+        );
+      });
+    }
+
+    // If still no match, return the first item as fallback
+    return primaryData || data[0];
+  };
+
   const fetchData = async (country, category) => {
     try {
-      const response = await fetch(`YOUR_API_ENDPOINT?country=${country}&indicator=${category}&apiKey=YOUR_API_KEY`);
-      const data = await response.json();
-      return data.value || Math.random() * 100;
+      const response = await fetch(`http://localhost:3000/api/get-data?country1=${country1}&country2=${country2}&category1=${category1}&category2=${category2}`);
+      const result = await response.json();
+      // console.log('API Response:', result); // For debugging
+
+      // Get primary indicator data from the arrays
+      const data1 = getPrimaryIndicatorData(result.data1, category1);
+      const data2 = getPrimaryIndicatorData(result.data2, category2);
+      
+      // console.log('Filtered Data:', { data1, data2 }); // For debugging
+      
+      return {
+        category1Data: {
+          latest: data1?.LatestValue || 0,
+          previous: data1?.PreviousValue || 0,
+          unit: data1?.Unit || '',
+          dates: {
+            latest: new Date(data1?.LatestValueDate).toLocaleDateString(),
+            previous: new Date(data1?.PreviousValueDate).toLocaleDateString()
+          },
+          source: data1?.Source || '',
+          adjustment: data1?.Adjustment || ''
+        },
+        category2Data: {
+          latest: data2?.LatestValue || 0,
+          previous: data2?.PreviousValue || 0,
+          unit: data2?.Unit || '',
+          dates: {
+            latest: new Date(data2?.LatestValueDate).toLocaleDateString(),
+            previous: new Date(data2?.PreviousValueDate).toLocaleDateString()
+          },
+          source: data2?.Source || '',
+          adjustment: data2?.Adjustment || ''
+        }
+      };
     } catch (error) {
       console.error('Error fetching data:', error);
-      return Math.random() * 100;
+      return {
+        category1Data: { latest: 0, previous: 0, unit: '', dates: { latest: '', previous: '' }, source: '', adjustment: '' },
+        category2Data: { latest: 0, previous: 0, unit: '', dates: { latest: '', previous: '' }, source: '', adjustment: '' }
+      };
     }
   };
 
@@ -29,8 +122,7 @@ export default function EconomicComparison() {
       return;
     }
 
-    const data1 = await fetchData(country1, category1);
-    const data2 = await fetchData(country2, category2);
+    const { category1Data, category2Data } = await fetchData(country1, category1);
 
     if (chartInstance.current) {
       chartInstance.current.destroy();
@@ -41,21 +133,36 @@ export default function EconomicComparison() {
     chartInstance.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: [country1, country2],
+        labels: [
+          `${country1}\n(Previous: ${category1Data.dates.previous})`,
+          `${country1}\n(Latest: ${category1Data.dates.latest})`,
+          `${country2}\n(Previous: ${category2Data.dates.previous})`,
+          `${country2}\n(Latest: ${category2Data.dates.latest})`
+        ],
         datasets: [
           {
-            label: category1,
-            data: [data1, 0],
-            backgroundColor: 'rgba(74, 144, 226, 0.8)',
+            label: `${category1} (${category1Data.unit})`,
+            data: [category1Data.previous, category1Data.latest, 0, 0],
+            backgroundColor: [
+              'rgba(74, 144, 226, 0.6)',
+              'rgba(74, 144, 226, 0.8)',
+              'rgba(74, 144, 226, 0)',
+              'rgba(74, 144, 226, 0)'
+            ],
             borderColor: 'rgba(74, 144, 226, 1)',
             borderWidth: 1,
             borderRadius: 10,
             borderSkipped: false,
           },
           {
-            label: category2,
-            data: [0, data2],
-            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+            label: `${category2} (${category2Data.unit})`,
+            data: [0, 0, category2Data.previous, category2Data.latest],
+            backgroundColor: [
+              'rgba(255, 99, 132, 0)',
+              'rgba(255, 99, 132, 0)',
+              'rgba(255, 99, 132, 0.6)',
+              'rgba(255, 99, 132, 0.8)'
+            ],
             borderColor: 'rgba(255, 99, 132, 1)',
             borderWidth: 1,
             borderRadius: 10,
@@ -71,6 +178,10 @@ export default function EconomicComparison() {
             beginAtZero: true,
             grid: {
               color: 'rgba(0, 0, 0, 0.1)'
+            },
+            title: {
+              display: true,
+              text: 'Value'
             }
           },
           x: {
@@ -95,6 +206,24 @@ export default function EconomicComparison() {
             font: {
               size: 18,
               weight: 'bold'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const dataset = context.dataset;
+                const value = context.raw;
+                const unit = dataset.label.split('(')[1].replace(')', '');
+                return `${dataset.label.split('(')[0].trim()}: ${value} ${unit}`;
+              },
+              afterBody: function(tooltipItems) {
+                const dataIndex = tooltipItems[0].datasetIndex;
+                const data = dataIndex === 0 ? category1Data : category2Data;
+                return [
+                  `Source: ${data.source}`,
+                  `Adjustment: ${data.adjustment}`
+                ];
+              }
             }
           }
         },
@@ -133,8 +262,6 @@ export default function EconomicComparison() {
               onChange={(e) => setCategory1(e.target.value)} 
               className="w-full border-gray-300 rounded-md p-2"
             >
-              {/* TODO
-              change the select a categoty to select a category related to */}
               <option value="">Select a category...</option>
               {categories.map((category) => (
                 <option key={category} value={category}>{category}</option>
@@ -168,8 +295,6 @@ export default function EconomicComparison() {
             </select>
           </div>
         </div>
-        {/* TODO: to create a scond page where after selecting the category will take you to another page which will help
-        select a list of category for chart */}
 
         <div className="text-center mb-6">
           <button 
@@ -189,4 +314,3 @@ export default function EconomicComparison() {
     </div>
   );
 }
-
