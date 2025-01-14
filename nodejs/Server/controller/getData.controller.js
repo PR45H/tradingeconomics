@@ -37,9 +37,15 @@ const getData = async (req, res) => {
         const data1 = await fetchData(country1, category1);
         const data2 = await fetchData(country2, category2);
 
+        
+        const filterData = (data1, data2) => {
+            const filteredData1 = data1.filter(item => item.Title.includes(`${country1} ${category1}`));
+            const filteredData2 = data2.filter(item => item.Title.includes(`${country2} ${category2}`));
+            return [filteredData1, filteredData2];
+        }
         const filteredData = filterData(data1, data2);
-
-        const filterData = (data1, data2) =>{}
+        
+        console.log(filteredData);
 
         res.json({
             message: `Data for ${country1} - ${category1}, and ${country2} - ${category2} fetched successfully`,
@@ -48,6 +54,7 @@ const getData = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
         if (error.response) {
             res.status(error.response.status).json({ message: error.response.data });
         } else {
