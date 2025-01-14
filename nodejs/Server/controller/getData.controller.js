@@ -37,22 +37,20 @@ const getData = async (req, res) => {
         const data1 = await fetchData(country1, category1);
         const data2 = await fetchData(country2, category2);
         // console.log(data1[0]);
-        
-        // const mappedData = data1.map(item => item.Title)
-        // console.log(mappedData);
-        const searchString1 = `${country1} ${category1}`;
-        const searchString2 = `${country2} ${category2}`;
-        // const isMatch = mappedData.some(title => title.toLowerCase().includes(searchString.toLowerCase()));
-        
-        // if (isMatch) {
-        //     console.log(`true and it is on index ${mappedData.indexOf(searchString)}`);
-        // } else {
-        //     console.log('false');
-        // }
+        // filtering data based on search string
         const filterData = (data) => {
+            const searchString1 = `${country1} ${category1}`;
+            const searchString2 = `${country2} ${category2}`;
+            
+            
             const filteredData1 = data.filter(item => item.Title.toLowerCase().includes(searchString1.toLowerCase()));
             const filteredData2 = data.filter(item => item.Title.toLowerCase().includes(searchString2.toLowerCase()));
-            return [filteredData1, filteredData2];
+            if (filteredData1.length === 0) {
+                return filteredData2;
+            } else {
+                return filteredData1;
+            }
+            // return [filteredData1, filteredData2];
         };
 
         const filterData1 = filterData(data1);
