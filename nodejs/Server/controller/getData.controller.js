@@ -36,16 +36,29 @@ const getData = async (req, res) => {
         // Sequentially fetch data to avoid rate limiting
         const data1 = await fetchData(country1, category1);
         const data2 = await fetchData(country2, category2);
-
+        // console.log(data1[0]);
         
-        const filterData = (data1, data2) => {
-            const filteredData1 = data1.filter(item => item.Title.includes(`${country1} ${category1}`));
-            const filteredData2 = data2.filter(item => item.Title.includes(`${country2} ${category2}`));
+        // const mappedData = data1.map(item => item.Title)
+        // console.log(mappedData);
+        const searchString1 = `${country1} ${category1}`;
+        const searchString2 = `${country2} ${category2}`;
+        // const isMatch = mappedData.some(title => title.toLowerCase().includes(searchString.toLowerCase()));
+        
+        // if (isMatch) {
+        //     console.log(`true and it is on index ${mappedData.indexOf(searchString)}`);
+        // } else {
+        //     console.log('false');
+        // }
+        const filterData = (data) => {
+            const filteredData1 = data.filter(item => item.Title.toLowerCase().includes(searchString1.toLowerCase()));
+            const filteredData2 = data.filter(item => item.Title.toLowerCase().includes(searchString2.toLowerCase()));
             return [filteredData1, filteredData2];
-        }
-        const filteredData = filterData(data1, data2);
-        
-        console.log(filteredData);
+        };
+
+        const filterData1 = filterData(data1);
+        const filterData2 = filterData(data2);
+
+        console.log(filterData1, filterData2);
 
         res.json({
             message: `Data for ${country1} - ${category1}, and ${country2} - ${category2} fetched successfully`,
