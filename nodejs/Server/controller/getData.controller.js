@@ -45,15 +45,8 @@ const getData = async (req, res) => {
             // filtering using title with .include was giving data for other categories
             // other than the one selected.
             // now changing it into a more specific search with country and category.
-            const filteredData1 = data.filter(item => 
-                item.Country.toLowerCase() === country1.toLowerCase() && 
-                item.Category.toLowerCase().includes(category1.toLowerCase())
-            );
-            const filteredData2 = data.filter(item => 
-                item.Country.toLowerCase() === country2.toLowerCase() && 
-                item.Category.toLowerCase().includes(category2.toLowerCase())
-            );
-            
+            const filteredData1 = data.filter(item => item.Title.toLowerCase().includes(searchString1.toLowerCase()));
+            const filteredData2 = data.filter(item => item.Title.toLowerCase().includes(searchString2.toLowerCase()));
             if (filteredData1.length === 0) {
                 return filteredData2;
             } else {
