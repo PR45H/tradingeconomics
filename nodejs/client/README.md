@@ -1,8 +1,73 @@
-# React + Vite
+# Trading Economics Data Comparison App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application for comparing economic indicators between countries using the Trading Economics API.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Compare key economic indicators between two countries
+- Interactive charts using Chart.js
+- Real-time data from Trading Economics API
+- Responsive React-based UI built with Vite
+- RESTful Express backend
+
+## Tech Stack
+
+### Frontend
+- React
+- Vite
+- Chart.js
+- Axios
+
+### Backend
+- Node.js
+- Express
+- Trading Economics API Client
+
+## Installation
+
+```bash
+# Install frontend dependencies
+cd client
+npm install
+
+# Install backend dependencies
+cd ../server
+npm install
+```
+
+## Configuration
+
+Create a `.env` file in the server directory:
+
+```env
+TE_API_KEY=your_trading_economics_api_key
+```
+
+## Running the Application
+
+```bash
+# Start frontend (development)
+cd client
+npm run dev
+
+# Start backend
+cd server
+npm start
+```
+
+## API Integration
+
+The backend uses the Trading Economics API to fetch economic data:
+
+```javascript
+const tradingeconomics = require('tradingeconomics');
+tradingeconomics.login(process.env.TE_API_KEY);
+```
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License.
